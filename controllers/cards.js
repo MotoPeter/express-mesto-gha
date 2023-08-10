@@ -32,7 +32,7 @@ const createCard = (req, res) => {
   const owner = req.user._id;
   const { name, link } = req.body;
   Card.create({ name, link, owner })
-    .then((card) => res.send(card))
+    .then((card) => res.status(httpConstants.HTTP_STATUS_CREATED).send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: `Некорректные данные: ${name}, ${link}` });
