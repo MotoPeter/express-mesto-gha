@@ -3,6 +3,7 @@
 const bodyParser = require('body-parser');
 const express = require('express');
 const mongoose = require('mongoose');
+const httpConstants = require('./utils/constants');
 const userRoutes = require('./routes/users');
 const cardRoutes = require('./routes/cards');
 
@@ -22,6 +23,9 @@ app.use(bodyParser.json());
 
 app.use(userRoutes);
 app.use(cardRoutes);
+app.use('*', (req, res) => {
+  res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Некорректный путь' });
+});
 
 // подключаемся к серверу mongo
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
