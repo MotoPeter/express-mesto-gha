@@ -53,13 +53,13 @@ const createUser = (req, res) => {
 
 const updateUser = (req, res) => {
   const { name, about } = req.body;
-  User.findByIdAndUpdate(req.user._id, { name, about }, { new: true })
+  User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res
           .status(httpConstants.HTTP_STATUS_BAD_REQUEST)
-          .send({ message: `Некорректные данные: ${{ name, about }}` });
+          .send({ message: 'Некорректные данные' });
       } else if (err.name === 'CastError') {
         res
           .status(httpConstants.HTTP_STATUS_NOT_FOUND)
