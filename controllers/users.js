@@ -12,7 +12,7 @@ const getUser = (req, res) => {
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: `Пользователь id: ${req.params.id} не найден` });
+        res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: `Некорректные данные: ${req.params.id}` });;
       } else {
         res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
       }
