@@ -10,17 +10,14 @@ const getCards = (_req, res) => {
 
 const deleteCard = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
+    .orFail(new Error('notValidId'))
     .then((card) => {
-      if (!card) {
-        res
-          .status(httpConstants.HTTP_STATUS_NOT_FOUND)
-          .send({ message: `Карточка id: ${req.params.cardId} не найдена` });
-      } else {
-        return res.send(card);
-      }
+      res.send(card);
     })
     .catch((err) => {
-      if (err.kind === 'ObjectId') {
+      if (err.message === 'notValidId') {
+        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: `Карточка id: ${req.params.cardId} не найдена` });
+      } else if (err.kind === 'ObjectId') {
         res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: `Некорректные данные: ${req.params.cardId}` });
       } else {
         res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
@@ -48,17 +45,14 @@ const delLike = (req, res) => {
     { $pull: { likes: req.user._id } },
     { new: true, runValidators: true },
   )
+    .orFail(new Error('notValidId'))
     .then((card) => {
-      if (!card) {
-        res
-          .status(httpConstants.HTTP_STATUS_NOT_FOUND)
-          .send({ message: `Карточка id: ${req.params.cardId} не найдена` });
-      } else {
-        return res.send(card);
-      }
+      res.send(card);
     })
     .catch((err) => {
-      if (err.kind === 'ObjectId') {
+      if (err.message === 'notValidId') {
+        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: `Карточка id: ${req.params.cardId} не найдена` });
+      } else if (err.kind === 'ObjectId') {
         res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: `Некорректные данные: ${req.params.cardId}` });
       } else {
         res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
@@ -72,17 +66,14 @@ const putLike = (req, res) => {
     { $addToSet: { likes: req.user._id } },
     { new: true, runValidators: true },
   )
+    .orFail(new Error('notValidId'))
     .then((card) => {
-      if (!card) {
-        res
-          .status(httpConstants.HTTP_STATUS_NOT_FOUND)
-          .send({ message: `Карточка id: ${req.params.cardId} не найдена` });
-      } else {
-        return res.send(card);
-      }
+      res.send(card);
     })
     .catch((err) => {
-      if (err.kind === 'ObjectId') {
+      if (err.message === 'notValidId') {
+        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: `Карточка id: ${req.params.cardId} не найдена` });
+      } else if (err.kind === 'ObjectId') {
         res.status(httpConstants.HTTP_STATUS_BAD_REQUEST).send({ message: `Некорректные данные: ${req.params.cardId}` });
       } else {
         res.status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });

@@ -11,18 +11,15 @@ const getUsers = (_req, res) => {
 
 const getUser = (req, res) => {
   User.findById(req.params.id)
+    .orFail(new Error('notValidId'))
     // eslint-disable-next-line consistent-return
     .then((user) => {
-      if (!user) {
-        res
-          .status(httpConstants.HTTP_STATUS_NOT_FOUND)
-          .send({ message: `Пользователь id: ${req.user._id} не найден` });
-      } else {
-        return res.send(user);
-      }
+      res.send(user);
     })
     .catch((err) => {
-      if (err.kind === 'ObjectId') {
+      if (err.message === 'notValidId') {
+        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: `Пользователь id: ${req.user._id} не найден` });
+      } else if (err.kind === 'ObjectId') {
         res
           .status(httpConstants.HTTP_STATUS_BAD_REQUEST)
           .send({ message: `Некорректные данные: ${req.params.id}` });
