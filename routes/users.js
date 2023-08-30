@@ -1,6 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 const userRouter = require('express').Router();
-const { celebrate } = require('celebrate');
+const celebrate = require('../middlewares/celebrate');
 const {
   getUsers,
   getUser,

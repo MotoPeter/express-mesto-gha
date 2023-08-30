@@ -1,6 +1,5 @@
-/* eslint-disable import/no-extraneous-dependencies */
 const cardRouter = require('express').Router();
-const { celebrate } = require('celebrate');
+const celebrate = require('../middlewares/celebrate');
 const {
   getCards,
   deleteCard,

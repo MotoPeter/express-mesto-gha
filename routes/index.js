@@ -5,7 +5,7 @@ const userRouter = require('./users');
 const cardRouter = require('./cards');
 const { login, createUser } = require('../controllers/users');
 const auth = require('../middlewares/auth');
-const { celebrate } = require('celebrate');
+const celebrate = require('../middlewares/celebrate');
 
 router.post('/signin', celebrate.login, login);
 router.post('/signup', celebrate.createUser, createUser);
