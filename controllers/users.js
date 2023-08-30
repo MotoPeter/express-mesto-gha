@@ -1,16 +1,27 @@
+/* eslint-disable no-else-return */
+/* eslint-disable import/order */
+/* eslint-disable consistent-return */
+/* eslint-disable no-unused-vars */
+/* eslint-disable import/no-extraneous-dependencies */
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const httpConstants = require('../utils/constants');
+const NotFoundError = require('../errors/notfound-error');
+const BadRequest = require('../errors/badrequest-error');
+const ConflictError = require('../errors/conflict-error');
+const UnauthorizedError = require('../errors/unauthorized-error');
 
-const getUsers = (_req, res) => {
+const { JWT_SECRET = 'SECRET_KEY' } = process.env;
+
+const getUsers = (_req, res, next) => {
   User.find({})
     .then((users) => res.send(users))
-    .catch(() => res
-      .status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
-      .send({ message: 'На сервере произошла ошибка' }));
+    .catch((next));
 };
 
-const getUser = (req, res) => {
-  User.findById(req.params.id)
+const getUser = (req, res, next) => {
+  User.findById(req.user._id)
     .orFail(new Error('notValidId'))
     // eslint-disable-next-line consistent-return
     .then((user) => {
@@ -18,76 +29,78 @@ const getUser = (req, res) => {
     })
     .catch((err) => {
       if (err.message === 'notValidId') {
-        res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: `Пользователь id: ${req.user._id} не найден` });
-      } else if (err.kind === 'ObjectId') {
-        res
-          .status(httpConstants.HTTP_STATUS_BAD_REQUEST)
-          .send({ message: `Некорректные данные: ${req.params.id}` });
+        return next(new NotFoundError(`Пользователь id: ${req.user._id} не найден`));
+      } if (err.kind === 'ObjectId') {
+        return next(new BadRequest(`Некорректные данные: ${req.params.id}`));
+      // eslint-disable-next-line no-else-return
       } else {
-        res
-          .status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: 'На сервере произошла ошибка' });
+        return next(err);
       }
     });
 };
 
-const createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
-  User.create({ name, about, avatar })
-    .then((user) => res.status(httpConstants.HTTP_STATUS_CREATED).send(user))
+const createUser = (req, res, next) => {
+  const {
+    email, password,
+  } = req.body;
+  if (!email || !password) {
+    return next(new BadRequest('Email и пароль не могут быть пустыми'));
+  }
+  bcrypt.hash(password, 10)
+    .then((hash) => User.create({
+      email, password: hash,
+    }))
+    .then(({ _id }) => res.status(httpConstants.HTTP_STATUS_CREATED).send({ id: _id }))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res
-          .status(httpConstants.HTTP_STATUS_BAD_REQUEST)
-          .send({ message: `Некорректные данные: ${{ name, about, avatar }}` });
+      if (err.code === 11000) {
+        return next(new ConflictError(`Пользователь с email '${email}' уже существует.`));
       } else {
-        res
-          .status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: 'На сервере произошла ошибка' });
+        return next(err);
       }
     });
 };
 
-const updateUser = (req, res) => {
+const updateUser = (req, res, next) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res
-          .status(httpConstants.HTTP_STATUS_BAD_REQUEST)
-          .send({ message: 'Некорректные данные' });
+        return next(new BadRequest('Некорректные данные'));
       } else if (err.name === 'CastError') {
-        res
-          .status(httpConstants.HTTP_STATUS_NOT_FOUND)
-          .send({ message: `Пользователь id: ${req.user._id} не найден` });
+        return next(new NotFoundError(`Пользователь id: ${req.user._id} не найден`));
       } else {
-        res
-          .status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: 'На сервере произошла ошибка' });
+        return next(err);
       }
     });
 };
 
-const updateAvatar = (req, res) => {
+const updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(req.user._id, { avatar }, { new: true })
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res
-          .status(httpConstants.HTTP_STATUS_BAD_REQUEST)
-          .send({ message: `Некорректные данные: ${{ avatar }}` });
+        return next(new BadRequest(`Некорректные данные: ${{ avatar }}`));
       } else if (err.name === 'CastError') {
-        res
-          .status(httpConstants.HTTP_STATUS_NOT_FOUND)
-          .send({ message: `Пользователь id: ${req.user._id} не найден` });
+        return next(new NotFoundError(`Пользователь id: ${req.user._id} не найден`));
       } else {
-        res
-          .status(httpConstants.HTTP_STATUS_INTERNAL_SERVER_ERROR)
-          .send({ message: 'На сервере произошла ошибка' });
+        return next(err);
       }
     });
+};
+
+const login = (req, res, next) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return next(new BadRequest('Email и пароль не могут быть пустыми'));
+  }
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      // вернём токен
+      res.send({ token: jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' }) });
+    })
+    .catch((err) => next(new UnauthorizedError(err.message)));
 };
 
 module.exports = {
@@ -96,4 +109,5 @@ module.exports = {
   createUser,
   updateUser,
   updateAvatar,
+  login,
 };

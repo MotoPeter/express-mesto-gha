@@ -1,4 +1,6 @@
+/* eslint-disable import/no-extraneous-dependencies */
 const cardRouter = require('express').Router();
+const { celebrate } = require('celebrate');
 const {
   getCards,
   deleteCard,
@@ -7,14 +9,14 @@ const {
   delLike,
 } = require('../controllers/cards');
 
-cardRouter.get('/cards', getCards);
+cardRouter.get('/', getCards);
 
-cardRouter.delete('/cards/:cardId', deleteCard);
+cardRouter.delete('/:cardId', celebrate.getCard, deleteCard);
 
-cardRouter.post('/cards', createCard);
+cardRouter.post('/', celebrate.createCard, createCard);
 
-cardRouter.put('/cards/:cardId/likes', putLike);
+cardRouter.put('/:cardId/likes', celebrate.getCard, putLike);
 
-cardRouter.delete('/cards/:cardId/likes', delLike);
+cardRouter.delete('/:cardId/likes', celebrate.getCard, delLike);
 
 module.exports = cardRouter;

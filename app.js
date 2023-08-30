@@ -4,10 +4,12 @@
 const bodyParser = require('body-parser');
 const express = require('express');
 const mongoose = require('mongoose');
-const httpConstants = require('./utils/constants');
-const userRoutes = require('./routes/users');
-const cardRoutes = require('./routes/cards');
+const router = require('./routes');
 const helmet = require('helmet');
+const errorHandler = require('./middlewares/error-handler');
+const NotFoundError = require('./errors/notfound-error');
+require('dotenv').config();
+const { errors } = require('celebrate');
 
 const { PORT = 3000, DB_URL = 'mongodb://127.0.0.1:27017/mestodb' } = process.env;
 
@@ -15,26 +17,23 @@ const app = express();
 
 app.use(helmet());
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '64d36363c19485df664ba91c',
-  };
-
-  next();
-});
-
 app.use(bodyParser.json());
 
-app.use(userRoutes);
-app.use(cardRoutes);
-app.use('*', (req, res) => {
-  res.status(httpConstants.HTTP_STATUS_NOT_FOUND).send({ message: 'Некорректный путь' });
-});
+app.use(router);
+app.use('*', (req, res, next) => next(new NotFoundError('Некорректный путь')));
 
 // подключаемся к серверу mongo
-mongoose.connect(DB_URL, {
-  useNewUrlParser: true,
-});
+mongoose
+  .connect(DB_URL, {
+    useNewUrlParser: true,
+  })
+  .then(() => {
+    console.log('connected to mestodb');
+  });
+
+app.use(errors());
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
