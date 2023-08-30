@@ -41,7 +41,7 @@ const getUser = (req, res, next) => {
 
 const createUser = (req, res, next) => {
   const {
-    email, password,
+    email, password, name, about, avatar,
   } = req.body;
   if (!email || !password) {
     return next(new BadRequest('Email и пароль не могут быть пустыми'));
@@ -50,7 +50,9 @@ const createUser = (req, res, next) => {
     .then((hash) => User.create({
       email, password: hash,
     }))
-    .then(({ _id }) => res.status(httpConstants.HTTP_STATUS_CREATED).send({ id: _id }))
+    .then((user) => res.status(httpConstants.HTTP_STATUS_CREATED).send({
+      email, name, about, avatar,
+    }))
     .catch((err) => {
       if (err.code === 11000) {
         return next(new ConflictError(`Пользователь с email '${email}' уже существует.`));
