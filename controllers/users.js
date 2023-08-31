@@ -48,7 +48,7 @@ const createUser = (req, res, next) => {
   }
   bcrypt.hash(password, 10)
     .then((hash) => User.create({
-      email, password: hash,
+      email, password: hash, name, about, avatar,
     }))
     .then((user) => res.status(httpConstants.HTTP_STATUS_CREATED).send({
       email, name, about, avatar,
@@ -99,8 +99,14 @@ const login = (req, res, next) => {
   }
   return User.findUserByCredentials(email, password)
     .then((user) => {
+      const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
       // вернём токен
-      res.send({ token: jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' }) });
+      res.cookie('jwt', token, {
+        // token - наш JWT токен, который мы отправляем
+        maxAge: 3600000 * 24 * 7,
+        httpOnly: true,
+      });
+      res.send(token);
     })
     .catch((err) => next(new UnauthorizedError(err.message)));
 };

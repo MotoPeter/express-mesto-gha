@@ -7,7 +7,6 @@ const mongoose = require('mongoose');
 const router = require('./routes');
 const helmet = require('helmet');
 const errorHandler = require('./middlewares/error-handler');
-const NotFoundError = require('./errors/notfound-error');
 require('dotenv').config();
 const { errors } = require('celebrate');
 
@@ -20,7 +19,6 @@ app.use(helmet());
 app.use(bodyParser.json());
 
 app.use(router);
-app.use('*', (req, res, next) => next(new NotFoundError('Некорректный путь')));
 
 // подключаемся к серверу mongo
 mongoose
