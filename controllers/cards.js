@@ -19,7 +19,7 @@ const deleteCard = (req, res, next) => {
     .then((card) => {
       if (card.owner.toString() !== owner) {
         // eslint-disable-next-line new-cap
-        throw new forbidenError('Отсутствие прав на удаление карточки.');
+        throw new forbidenError('У вас нет прав на удаление карточки');
       }
       return Card.findByIdAndRemove(req.params.cardId);
     })
