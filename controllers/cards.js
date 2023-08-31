@@ -15,7 +15,7 @@ const getCards = (_req, res, next) => {
 const deleteCard = (req, res, next) => {
   const owner = req.user._id;
   Card.findById(req.params.cardId)
-    .orFail(new Error('notValidId'))
+    .orFail(() => new NotFoundError(`Карточка id: ${req.params.cardId} не найдена`))
     .then((card) => {
       if (card.owner.toString() !== owner) {
         // eslint-disable-next-line new-cap
@@ -25,9 +25,7 @@ const deleteCard = (req, res, next) => {
     })
     .then((card) => res.send(card))
     .catch((err) => {
-      if (err.message === 'notValidId') {
-        return next(new NotFoundError(`Карточка id: ${req.params.cardId} не найдена`));
-      } if (err.kind === 'ObjectId') {
+      if (err.kind === 'ObjectId') {
         return next(new BadRequest(`Некорректные данные: ${req.params.cardId}`));
       } else {
         return next(err);

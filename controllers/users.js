@@ -23,15 +23,13 @@ const getUsers = (_req, res, next) => {
 const getUser = (req, res, next) => {
   const userId = req.params.userId ? req.params.userId : req.user._id;
   User.findById(userId)
-    .orFail(new Error('notValidId'))
+    .orFail(() => new NotFoundError(`Пользователь id: ${userId} не найден`))
     // eslint-disable-next-line consistent-return
     .then((user) => {
       res.send(user);
     })
     .catch((err) => {
-      if (err.message === 'notValidId') {
-        return next(new NotFoundError(`Пользователь id: ${userId} не найден`));
-      } if (err.kind === 'ObjectId') {
+      if (err.kind === 'ObjectId') {
         return next(new BadRequest(`Некорректные данные: ${userId}`));
       // eslint-disable-next-line no-else-return
       } else {
@@ -44,9 +42,6 @@ const createUser = (req, res, next) => {
   const {
     email, password, name, about, avatar,
   } = req.body;
-  if (!email || !password) {
-    return next(new BadRequest('Email и пароль не могут быть пустыми'));
-  }
   bcrypt.hash(password, 10)
     .then((hash) => User.create({
       email, password: hash, name, about, avatar,
@@ -55,7 +50,9 @@ const createUser = (req, res, next) => {
       email, name, about, avatar,
     }))
     .catch((err) => {
-      if (err.code === 11000) {
+      if (err.name === 'ValidationError') {
+        return next(new BadRequest('Некорректные данные'));
+      } else if (err.code === 11000) {
         return next(new ConflictError(`Пользователь с email '${email}' уже существует.`));
       } else {
         return next(err);
@@ -66,12 +63,17 @@ const createUser = (req, res, next) => {
 const updateUser = (req, res, next) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
-    .then((user) => res.send(user))
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError(
+          `Пользователь id: ${req.user._id} не найден`,
+        );
+      }
+      return res.send(user);
+    })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'ValidationError' || 'CastError') {
         return next(new BadRequest('Некорректные данные'));
-      } else if (err.name === 'CastError') {
-        return next(new NotFoundError(`Пользователь id: ${req.user._id} не найден`));
       } else {
         return next(err);
       }
@@ -81,12 +83,17 @@ const updateUser = (req, res, next) => {
 const updateAvatar = (req, res, next) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(req.user._id, { avatar }, { new: true })
-    .then((user) => res.send(user))
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError(
+          `Пользователь id: ${req.user._id} не найден`,
+        );
+      }
+      return res.send(user);
+    })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err.name === 'ValidationError' || 'CastError') {
         return next(new BadRequest(`Некорректные данные: ${{ avatar }}`));
-      } else if (err.name === 'CastError') {
-        return next(new NotFoundError(`Пользователь id: ${req.user._id} не найден`));
       } else {
         return next(err);
       }
@@ -95,9 +102,6 @@ const updateAvatar = (req, res, next) => {
 
 const login = (req, res, next) => {
   const { email, password } = req.body;
-  if (!email || !password) {
-    return next(new BadRequest('Email и пароль не могут быть пустыми'));
-  }
   return User.findUserByCredentials(email, password)
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
@@ -109,7 +113,7 @@ const login = (req, res, next) => {
       });
       res.send({ token });
     })
-    .catch((err) => next(new UnauthorizedError(err.message)));
+    .catch(next);
 };
 
 module.exports = {

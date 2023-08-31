@@ -5,6 +5,7 @@
 const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const validator = require("validator");
+const UnauthorizedError = require("../errors/unauthorized-error");
 
 // eslint-disable-next-line no-undef
 const userSchema = new mongoose.Schema(
@@ -42,7 +43,6 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      minlength: 8,
       select: false,
     },
   },
@@ -52,13 +52,13 @@ const userSchema = new mongoose.Schema(
 userSchema.statics.findUserByCredentials = function (email, password) {
   return this.findOne({ email }).select('+password').then((user) => {
     if (!user) {
-      return Promise.reject(new Error("Неправильные почта или пароль"));
+      return Promise.reject(new UnauthorizedError("Неправильные почта или пароль"));
     }
 
     return bcrypt.compare(password, user.password).then((matched) => {
       // проверяем хеши паролей]
       if (!matched) {
-        return Promise.reject(new Error('Неправильные почта или пароль.'));
+        return Promise.reject(new UnauthorizedError('Неправильные почта или пароль.'));
       }
 
       return user; // теперь user доступен

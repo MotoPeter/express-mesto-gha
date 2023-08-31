@@ -13,6 +13,9 @@ router.post('/signup', celebrate.createUser, createUser);
 
 router.use('/users', auth, userRouter);
 router.use('/cards', auth, cardRouter);
-router.use('*', (req, res, next) => next(new NotFoundError('Некорректный путь')));
+router.get('/signout', (req, res) => {
+  res.clearCookie('token').send({ message: 'Выход' });
+});
+router.use('*', auth, (req, res, next) => next(new NotFoundError('Некорректный путь')));
 
 module.exports = router;
