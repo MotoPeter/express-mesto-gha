@@ -21,7 +21,8 @@ const getUsers = (_req, res, next) => {
 };
 
 const getUser = (req, res, next) => {
-  User.findById(req.user._id)
+  const userId = req.params.userId ? req.params.userId : req.user._id;
+  User.findById(userId)
     .orFail(new Error('notValidId'))
     // eslint-disable-next-line consistent-return
     .then((user) => {
@@ -29,9 +30,9 @@ const getUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err.message === 'notValidId') {
-        return next(new NotFoundError(`Пользователь id: ${req.user._id} не найден`));
+        return next(new NotFoundError(`Пользователь id: ${userId} не найден`));
       } if (err.kind === 'ObjectId') {
-        return next(new BadRequest(`Некорректные данные: ${req.params.id}`));
+        return next(new BadRequest(`Некорректные данные: ${userId}`));
       // eslint-disable-next-line no-else-return
       } else {
         return next(err);
