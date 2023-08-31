@@ -17,7 +17,7 @@ const deleteCard = (req, res, next) => {
     .orFail(new Error('notValidId'))
     .then((card) => {
       if (card.owner.toString() !== owner) {
-        return next(new BadRequest('нет прав на удаление карточки'));
+        throw new BadRequest('Отсутствие прав на удаление карточки.');
       }
       return Card.findByIdAndRemove(req.params.cardId);
     })
