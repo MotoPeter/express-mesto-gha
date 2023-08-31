@@ -6,16 +6,16 @@ const { JWT_SECRET = 'SECRET_KEY' } = process.env;
 
 // eslint-disable-next-line consistent-return
 module.exports = (req, res, next) => {
-  const { authorization } = req.headers;
-  if (!authorization) {
-    return next(new UnauthorizedError('Необходима авторизация'));
+  const { token } = req.cookies;
+  if (!token) {
+    return next(new UnauthorizedError('Необходима авторизация1'));
   }
 
   let payload;
 
   try {
     payload = jwt.verify(
-      authorization,
+      token,
       JWT_SECRET,
     );
   } catch (err) {

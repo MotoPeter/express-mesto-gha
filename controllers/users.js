@@ -101,12 +101,12 @@ const login = (req, res, next) => {
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
       // вернём токен
-      res.cookie('jwt', token, {
+      res.cookie('token', token, {
         // token - наш JWT токен, который мы отправляем
         maxAge: 3600000 * 24 * 7,
         httpOnly: true,
       });
-      res.send(token);
+      res.send({ token });
     })
     .catch((err) => next(new UnauthorizedError(err.message)));
 };
