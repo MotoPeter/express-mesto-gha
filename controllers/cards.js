@@ -1,6 +1,7 @@
 /* eslint-disable no-else-return */
 /* eslint-disable consistent-return */
 const BadRequest = require('../errors/badrequest-error');
+const forbidenError = require('../errors/forbiden-error');
 const NotFoundError = require('../errors/notfound-error');
 const Card = require('../models/card');
 const httpConstants = require('../utils/constants');
@@ -17,7 +18,8 @@ const deleteCard = (req, res, next) => {
     .orFail(new Error('notValidId'))
     .then((card) => {
       if (card.owner.toString() !== owner) {
-        throw new BadRequest('Отсутствие прав на удаление карточки.');
+        // eslint-disable-next-line new-cap
+        throw new forbidenError('Отсутствие прав на удаление карточки.');
       }
       return Card.findByIdAndRemove(req.params.cardId);
     })
