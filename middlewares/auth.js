@@ -8,7 +8,7 @@ const { JWT_SECRET = 'SECRET_KEY' } = process.env;
 module.exports = (req, res, next) => {
   const { token } = req.cookies;
   if (!token) {
-    return next(new UnauthorizedError('Необходима авторизация1'));
+    return next(new UnauthorizedError('Необходима авторизация'));
   }
 
   let payload;
@@ -22,7 +22,6 @@ module.exports = (req, res, next) => {
     next(new UnauthorizedError('Необходима авторизация'));
   }
 
-  req.user = payload; // записываем пейлоуд в объект запроса
-
+  req.user = payload; // записываем пейлоуд в объект запрос
   return next(); // пропускаем запрос дальше
 };
