@@ -4,7 +4,7 @@ const BadRequest = require('../errors/badrequest-error');
 const forbidenError = require('../errors/forbiden-error');
 const NotFoundError = require('../errors/notfound-error');
 const Card = require('../models/card');
-const httpConstants = require('../utils/constants');
+const { httpConstants } = require('../utils/constants');
 
 const getCards = (_req, res, next) => {
   Card.find({})
