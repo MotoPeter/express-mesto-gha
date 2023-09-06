@@ -25,7 +25,7 @@ app.use(cookieParser());
 
 app.use(requestLogger);
 
-app.use(cors);
+//app.use(cors);
 
 app.use(router);
 
